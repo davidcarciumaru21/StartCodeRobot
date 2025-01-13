@@ -15,11 +15,7 @@ public class hardware {
     private HardwareMap hardwareMap = null;
 
     // Functia "init" reda o stare initiala a fiecarui motor din alcatuirea drivetrain-ului
-    /* Aceasta funtie poate fi folosita atat in teleOp cat si in autonomie, insa se
-    recomanda sa folosim doua fisiere diferite caci putem denumi altfel anumite obiecte
-    in funtie de ceea ce este nevoie ca ele sa faca, spre exemplu motoarele pot avea denumiri
-    mai scurte sau mai lungi pentru a face codul mai usor de citit ori pentru a spori
-    productibilitatea si rapiditatea programtorului*/
+    // Aceasta funtie poate fi folosita atat in teleOp cat si in autonomie
     public void init(HardwareMap hwMap) {
         hardwareMap = hwMap;
 
