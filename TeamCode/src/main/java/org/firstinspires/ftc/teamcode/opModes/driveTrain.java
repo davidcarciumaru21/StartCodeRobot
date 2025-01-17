@@ -45,9 +45,9 @@ public class driveTrain extends OpMode {
     // In aceasta metoda drivetrain-ul este condus cu ajutorul valorilor de la joystick
     public void moveDriveTrain(){
         // setam valorile ce ne intereseaza pentru miscarea robotului
-        leftYJoystick1 = -gamepad1.left_stick_y;
-        leftXJoystick1 = gamepad1.left_stick_x;
-        rightXJoystick1 = gamepad1.right_stick_x;
+        leftYJoystick1 = gamepad1.left_stick_y;
+        leftXJoystick1 = -gamepad1.left_stick_x;
+        rightXJoystick1 = -gamepad1.right_stick_x;
         // denominator este un numar ce face ca valorile pe care le preiau motoarele sa fie mai mici ca 1
         double denominator = Math.max(Math.abs(leftYJoystick1) + Math.abs(leftXJoystick1)
             + Math.abs(rightXJoystick1), 1);

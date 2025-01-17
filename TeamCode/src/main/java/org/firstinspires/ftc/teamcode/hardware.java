@@ -34,8 +34,8 @@ public class hardware {
         insa la cele din spate, sensul de miscare este opus
         */
         fr.setDirection(DcMotor.Direction.FORWARD);
-        fl.setDirection(DcMotor.Direction.FORWARD);
-        br.setDirection(DcMotor.Direction.REVERSE);
+        fl.setDirection(DcMotor.Direction.REVERSE);
+        br.setDirection(DcMotor.Direction.FORWARD);
         bl.setDirection(DcMotor.Direction.REVERSE);
 
         // Oprim motoarele
