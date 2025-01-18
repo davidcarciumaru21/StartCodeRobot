@@ -10,12 +10,13 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.hardware;
 
 @TeleOp(name = "TeleOpDriveTrain", group = "TeleOP")
-public class driveTrain extends OpMode {
+public class driveTrainOp extends OpMode {
 
     //***************Declaration-of-values***************
 
     hardware robot = new hardware(); // creeam obiectul responsabil de harware-ul robotului
     public double leftXJoystick1, leftYJoystick1, rightXJoystick1; // valorile joystickurilor de la controller
+    double motorFRvolt, motorFLvolt, motorBRvolt, motorBLvolt;
 
     //***************Methods***************
 
@@ -33,12 +34,12 @@ public class driveTrain extends OpMode {
     {
         // verificam ca valorile sa se afle intr-un interval [-1;+1]
         if (this.verifyMotorValues(FRmotorValue) && this.verifyMotorValues(FLmotorValue) &&
-            this.verifyMotorValues(BRmotorValue) && this.verifyMotorValues(BLmotorValue))
+                this.verifyMotorValues(BRmotorValue) && this.verifyMotorValues(BLmotorValue))
         {
-        robot.fr.setPower(FRmotorValue);
-        robot.fl.setPower(FLmotorValue);
-        robot.br.setPower(BRmotorValue);
-        robot.bl.setPower(BLmotorValue);
+            robot.fr.setPower(FRmotorValue);
+            robot.fl.setPower(FLmotorValue);
+            robot.br.setPower(BRmotorValue);
+            robot.bl.setPower(BLmotorValue);
         }
     }
 
@@ -50,20 +51,20 @@ public class driveTrain extends OpMode {
         rightXJoystick1 = -gamepad1.right_stick_x;
         // denominator este un numar ce face ca valorile pe care le preiau motoarele sa fie mai mici ca 1
         double denominator = Math.max(Math.abs(leftYJoystick1) + Math.abs(leftXJoystick1)
-            + Math.abs(rightXJoystick1), 1);
+                + Math.abs(rightXJoystick1), 1);
 
         // Calculam valorile cu care va merge fiecare motor
         // Valoarea motorului este redata de o relatie alcatuita din leftY, leftX si rightX si de denominator
         /*
-        * Fr = (y-x-rx)/d
-        * Fl = (y+x+rx)/d
-        * Br = (y+x-rx)/d
-        * Bl = (y-x+rx)/d
-        */
-        double motorFRvolt = (leftYJoystick1 - leftXJoystick1 - rightXJoystick1) / denominator;
-        double motorFLvolt = (leftYJoystick1 + leftXJoystick1 + rightXJoystick1) / denominator;
-        double motorBRvolt = (leftYJoystick1 + leftXJoystick1 - rightXJoystick1) / denominator;
-        double motorBLvolt = (leftYJoystick1 - leftXJoystick1 + rightXJoystick1) / denominator;
+         * Fr = (y-x-rx)/d
+         * Fl = (y+x+rx)/d
+         * Br = (y+x-rx)/dz
+         * Bl = (y-x+rx)/d
+         */
+        motorFRvolt = (leftYJoystick1 - leftXJoystick1 - rightXJoystick1) / denominator;
+        motorFLvolt = (leftYJoystick1 + leftXJoystick1 + rightXJoystick1) / denominator;
+        motorBRvolt = (leftYJoystick1 + leftXJoystick1 - rightXJoystick1) / denominator;
+        motorBLvolt = (leftYJoystick1 - leftXJoystick1 + rightXJoystick1) / denominator;
 
         // Miscatul propriu-zis al motoarelor prin intermediul valorilor calculate mai devreme
         this.moveMotorsByValues(motorFRvolt, motorFLvolt, motorBRvolt, motorBLvolt);
@@ -74,12 +75,12 @@ public class driveTrain extends OpMode {
     @Override
     public void init(){
         /*Initializam toate accesorile robotului, cum ar fi:
-        *   -Motoarele:
-        *       -fr - "motorFR" (Config - 0)
-        *       -fl - "motorFl" (Config - 1)
-        *       -br - "motorBR" (Config - 2)
-        *       -bl - "motorBL" (Config - 3)
-        */
+         *   -Motoarele:
+         *       -fr - "motorFR" (Config - 0)
+         *       -fl - "motorFl" (Config - 1)
+         *       -br - "motorBR" (Config - 2)
+         *       -bl - "motorBL" (Config - 3)
+         */
         robot.init(hardwareMap);
     }
 
@@ -87,5 +88,12 @@ public class driveTrain extends OpMode {
     public void loop(){
         // Functia ce declanseaza miscarea drivetrain-ului
         this.moveDriveTrain();
+
+        telemetry.addData("MotorFR", motorFRvolt);
+        telemetry.addData("MotorFL", motorFLvolt);
+        telemetry.addData("MotorBR", motorBRvolt);
+        telemetry.addData("MotorBL", motorBLvolt);
+
+        telemetry.update();
     }
 }
