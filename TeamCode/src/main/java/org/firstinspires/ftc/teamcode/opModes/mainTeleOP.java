@@ -4,69 +4,138 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.hardware;
+import org.firstinspires.ftc.teamcode.hardware; // Importam hardware-ul
 
 @TeleOp(name = "mainTeleOP", group = "TeleOP")
 public class mainTeleOP extends OpMode{
+
     //***************Declaration-of-values***************
 
     hardware robot = new hardware(); // creeam obiectul responsabil de harware-ul robotului
     double leftXJoystick1, leftYJoystick1, rightXJoystick1, up, forward; // valorile joystickurilor de la controller
-    int posmV, posmO;
-    int limMax = -5300;
-    int limMin = 10;
-    int limMaxOriz = 3000;
-    int limMinOriz = 0;
     double motorFRvolt, motorFLvolt, motorBRvolt, motorBLvolt;
+    final int limMax = -5300;
+    final int limMin = 10;
+    final int limMaxOriz = 3000;
+    final int limMinOriz = 0;
+    int posmV, posmO;
+    final double speecimenClose = 0.0;
+    final double specimentOpen = 0.5;
+    final double clawClose = 0.0;
+    final double clasOpen = 0.5;
+    boolean openSpecimen, openClaw;
+    final int colourGamepad1[] = {255, 0, 0, 15000};
+    final int colourGamepad2[] = {0, 0, 255, 15000};
+
+    // Felul in care vireaza gamepadu-rile la inceput
+    Gamepad.RumbleEffect effect = new Gamepad.RumbleEffect.Builder()
+            .addStep(1.0, 1.0, 250)
+            .addStep(0.0, 1.0, 250)
+            .addStep(1.0, 0.0, 250);
 
     //***************Methods***************
+
+    public void initGamepad(){
+        // Vibram gamepad-urile
+        gamepad1.runRumbleEffect(effect);
+        gamepad2.runRumbleEffect(effect);
+        // Schimbam culoarea gamepad-urilor in functie de array-urile specifice
+        gamepad1.setLedColor(colourGamepad1[0], colourGamepad1[1], colourGamepad1[2], colourGamepad1[3]);
+        gamepad2.setLedColor(colourGamepad2[0], colourGamepad2[1], colourGamepad2[2], colourGamepad2[3]);
+    }
+
+    public void initServo(){
+        // setam pozitia servo-urilor la inceput
+        robot.specimen.setPosition(speecimenClose);
+        robot.claw.setPosition(clawClose);
+        openSpecimen = false;
+        openClaw = false;
+    }
+
+    public void miscareServo(){
+        // miscarea servo-ului ce se ocupa de specimene
+        if(gamepad2.dpad_up){
+            robot.specimen.setPosition(specimentOpen);
+            openSpecimen = true;
+        } else if(gamepad2.dpad_down){
+            robot.specimen.setPosition(speecimenClose);
+            openSpecimen = false;
+        }
+
+        // miscarea gharei
+        if(gamepad2.dpad_right){
+            robot.claw.setPosition(clasOpen);
+            openClaw = true;
+        } else if(gamepad2.dpad_left){
+            robot.claw.setPosition(clawClose);
+            openClaw = false;
+        }
+    }
+
+    public void initArms(){
+        // ia pozitia actuala a bratului vertical pentru a seta un target position initial
+        posmV = robot.mV1.getCurrentPosition();
+
+        // initializam motoarele pentru a merge cu ajutorul encoder-elor
+
+        robot.mV1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.mV1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.mV2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.mV2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        robot.mO.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.mO.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
 
     public void armMoveUp() {
 
         up = -gamepad2.left_stick_y;
 
+        // Verificam daca output-ul cerut se afla in limite ori daca exista un voltaj pe joystick
         if ((up > 0 && posmV + 100 * up >= limMax) || (up < 0 && posmV + 100 * up <= limMin)) {
-            posmV -= 10 * up;
+            posmV -= 10 * up; // Update the target position first
+
             robot.mV1.setTargetPosition(posmV);
             robot.mV2.setTargetPosition(posmV);
 
             robot.mV1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             robot.mV2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            if(robot.mV1.getCurrentPosition() < posmV) {
-                robot.mV1.setPower(0.5);
-                robot.mV2.setPower(0.5);
-            } else{
-                robot.mV1.setPower(-0.5);
-                robot.mV2.setPower(-0.5);
-            }
+            // Adjust motor power based on the position
+            robot.mV1.setPower(0.5);
+            robot.mV2.setPower(0.5);
         } else {
-            // If joystick is not moved or the limits are reached, stop the motors
-            robot.mV1.setPower(posmV);
-            robot.mV2.setPower(posmV);
+            // Ensure target position is set even if no movement is needed
+            robot.mV1.setTargetPosition(posmV);
+            robot.mV2.setTargetPosition(posmV);
+
             robot.mV1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             robot.mV2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
             robot.mV1.setPower(0.1);
             robot.mV2.setPower(0.1);
         }
+
     }
 
     public void armMoveLateral() {
         forward = -gamepad2.right_stick_x;
 
+        // Verificam daca output-ul cerut se afla in limite ori daca exista un voltaj pe joystick
         if ((forward > 0 && posmO + 100 * forward <= limMaxOriz) || (forward < 0 && posmO + 100 * forward >= limMinOriz)) {
-            posmO -= 10 * forward;
+            posmO -= 10 * forward; // Update the target position first
+
             robot.mO.setTargetPosition(posmO);
-            if(robot.mO.getCurrentPosition() < posmO) {
-                robot.mO.setPower(0.5);
-            } else {
-                robot.mO.setPower(-0.5);
-            }
             robot.mO.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // Adjust motor power based on the position
+            robot.mO.setPower(0.5);
         } else {
-            robot.mO.setTargetPosition(posmO); // Maintain the current target position
-            robot.mO.setMode(DcMotor.RunMode.RUN_TO_POSITION); // Ensure position-holding mode
-            robot.mO.setPower(0.1); // Apply minimal
+            // Ensure target position is set even if no movement is needed
+            robot.mO.setTargetPosition(posmO);
+            robot.mO.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            robot.mO.setPower(0.1);
         }
     }
 
@@ -133,15 +202,8 @@ public class mainTeleOP extends OpMode{
          */
         robot.init(hardwareMap);
 
-        posmV = robot.mV1.getCurrentPosition();
-
-        robot.mV1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.mV1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        robot.mV2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.mV2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        robot.mO.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.mO.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        this.initArms(); // Initializarea bratelelor
+        this.initServo(); // initializarea servo-urilor
     }
 
     @Override
@@ -150,6 +212,9 @@ public class mainTeleOP extends OpMode{
         this.moveDriveTrain();
         this.armMoveUp();
         this.armMoveLateral();
+        this.miscareServo();
+
+        //***************Telemetry***************
 
         telemetry.addData("MotorFR", motorFRvolt);
         telemetry.addData("MotorFL", motorFLvolt);
@@ -159,6 +224,9 @@ public class mainTeleOP extends OpMode{
         telemetry.addData("ForwardValues", forward);
         telemetry.addData("mV", posmV);
         telemetry.addData("mO", posmO);
+        telemetry.addData("specimentServo", openSpecimen);
+        telemetry.addData("clawServo", openClaw);
+        telemetry.addLine("version 1.24.2025.7.31");
 
         telemetry.update();
     }

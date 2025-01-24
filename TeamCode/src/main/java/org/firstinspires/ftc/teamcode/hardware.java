@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 
 public class hardware {
 
@@ -13,11 +14,14 @@ public class hardware {
     public DcMotor br = null;
     public DcMotor bl = null;
 
-    //Declarare motoare brate;
+    // Declarare motoare brate;
     public DcMotor mV1; //motor vertical 1
     public DcMotor mV2; //motor vertical 2
     public DcMotor mO; //motor orizontal
-    public DcMotorEx ododreapta; //odometrie dreapta
+
+    // Declararea servo-urilor
+    public Servo specimen;
+    public Servo claw;
 
     private HardwareMap hardwareMap = null;
 
@@ -40,6 +44,8 @@ public class hardware {
         mV1 = hardwareMap.get(DcMotor.class, "motorVert1");
         mV2 = hardwareMap.get(DcMotor.class, "motorVert2");
         mO = hardwareMap.get(DcMotor.class, "motorOriz");
+        specimen = hardwareMap.get(Servo.class, "specimen");
+        claw = hardwareMap.get(Servo.class, "claw");
 
         /* La un drivetrain de tip mecanum motoarele din fata au sensul miscarii in fata
         insa la cele din spate, sensul de miscare este opus
@@ -51,7 +57,6 @@ public class hardware {
         mV1.setDirection(DcMotor.Direction.FORWARD);
         mV2.setDirection(DcMotor.Direction.REVERSE);
         mO.setDirection(DcMotor.Direction.FORWARD);
-
 
         // Oprim motoarele
         fr.setPower(0);

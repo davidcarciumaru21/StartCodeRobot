@@ -89,10 +89,13 @@ public class driveTrainOp extends OpMode {
         // Functia ce declanseaza miscarea drivetrain-ului
         this.moveDriveTrain();
 
+        //***************Telemetry***************
+
         telemetry.addData("MotorFR", motorFRvolt);
         telemetry.addData("MotorFL", motorFLvolt);
         telemetry.addData("MotorBR", motorBRvolt);
         telemetry.addData("MotorBL", motorBLvolt);
+        telemetry.addLine("version 1.23.2025.4.29");
 
         telemetry.update();
     }
