@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.opModes;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.teamcode.hardware; // Importam hardware-ul
 
@@ -31,7 +32,7 @@ public class mainTeleOP extends OpMode{
     Gamepad.RumbleEffect effect = new Gamepad.RumbleEffect.Builder()
             .addStep(1.0, 1.0, 250)
             .addStep(0.0, 1.0, 250)
-            .addStep(1.0, 0.0, 250);
+            .addStep(1.0, 0.0, 250).build();
 
     //***************Methods***************
 
