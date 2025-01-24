@@ -209,6 +209,8 @@ public class mainTeleOP extends OpMode{
 
         this.initArms(); // Initializarea bratelelor
         this.initServo(); // initializarea servo-urilor
+
+        this.initGamepad();
     }
 
     @Override
