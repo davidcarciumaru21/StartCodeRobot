@@ -25,8 +25,10 @@ public class mainTeleOP extends OpMode{
     final double clawClose = 0.0;
     final double clasOpen = 0.5;
     boolean openSpecimen, openClaw;
-    final int colourGamepad1[] = {255, 0, 0, 15000};
-    final int colourGamepad2[] = {0, 0, 255, 15000};
+    final int[] colourGamepad1 = {255, 0, 0, 15000};
+    final int[] colourGamepad2 = {0, 0, 255, 15000};
+    boolean ps4Controller1 = true;
+    boolean ps4Controller2 = false;
 
     // Felul in care vireaza gamepadu-rile la inceput
     Gamepad.RumbleEffect effect = new Gamepad.RumbleEffect.Builder()
@@ -37,12 +39,16 @@ public class mainTeleOP extends OpMode{
     //***************Methods***************
 
     public void initGamepad(){
-        // Vibram gamepad-urile
-        gamepad1.runRumbleEffect(effect);
-        gamepad2.runRumbleEffect(effect);
-        // Schimbam culoarea gamepad-urilor in functie de array-urile specifice
-        gamepad1.setLedColor(colourGamepad1[0], colourGamepad1[1], colourGamepad1[2], colourGamepad1[3]);
-        gamepad2.setLedColor(colourGamepad2[0], colourGamepad2[1], colourGamepad2[2], colourGamepad2[3]);
+
+        if (ps4Controller1) {
+            gamepad1.runRumbleEffect(effect);
+            gamepad1.setLedColor(colourGamepad1[0], colourGamepad1[1], colourGamepad1[2], colourGamepad1[3]);
+        }
+
+        if (ps4Controller2) {
+            gamepad2.runRumbleEffect(effect);
+            gamepad2.setLedColor(colourGamepad2[0], colourGamepad2[1], colourGamepad2[2], colourGamepad2[3]);
+        }
     }
 
     public void initServo(){
@@ -227,6 +233,8 @@ public class mainTeleOP extends OpMode{
         telemetry.addData("mO", posmO);
         telemetry.addData("specimentServo", openSpecimen);
         telemetry.addData("clawServo", openClaw);
+        telemetry.addData("ps4Controller1", ps4Controller1);
+        telemetry.addData("ps4Controller2", ps4Controller2);
         telemetry.addLine("version 1.24.2025.7.31");
 
         telemetry.update();
