@@ -100,7 +100,7 @@ public class mainTeleOP extends OpMode{
 
         // Verificam daca output-ul cerut se afla in limite ori daca exista un voltaj pe joystick
         if ((up > 0 && posmV + 100 * up >= limMax) || (up < 0 && posmV + 100 * up <= limMin)) {
-            posmV -= 10 * up; // Update the target position first
+            posmV -= 10 * up;
 
             robot.mV1.setTargetPosition(posmV);
             robot.mV2.setTargetPosition(posmV);
@@ -108,11 +108,10 @@ public class mainTeleOP extends OpMode{
             robot.mV1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             robot.mV2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            // Adjust motor power based on the position
             robot.mV1.setPower(0.5);
             robot.mV2.setPower(0.5);
+            // Daca nu exista input mototoarele trebuie sa ramana pe pozitii
         } else {
-            // Ensure target position is set even if no movement is needed
             robot.mV1.setTargetPosition(posmV);
             robot.mV2.setTargetPosition(posmV);
 
@@ -130,15 +129,14 @@ public class mainTeleOP extends OpMode{
 
         // Verificam daca output-ul cerut se afla in limite ori daca exista un voltaj pe joystick
         if ((forward > 0 && posmO + 100 * forward <= limMaxOriz) || (forward < 0 && posmO + 100 * forward >= limMinOriz)) {
-            posmO -= 10 * forward; // Update the target position first
+            posmO -= 10 * forward;
 
             robot.mO.setTargetPosition(posmO);
             robot.mO.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            // Adjust motor power based on the position
             robot.mO.setPower(0.5);
+            // Daca nu exista input mototoarele trebuie sa ramana pe pozitii
         } else {
-            // Ensure target position is set even if no movement is needed
             robot.mO.setTargetPosition(posmO);
             robot.mO.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
