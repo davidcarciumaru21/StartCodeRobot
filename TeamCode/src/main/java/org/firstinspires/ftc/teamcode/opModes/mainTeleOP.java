@@ -235,7 +235,7 @@ public class mainTeleOP extends OpMode{
         telemetry.addData("clawServo", openClaw);
         telemetry.addData("ps4Controller1", ps4Controller1);
         telemetry.addData("ps4Controller2", ps4Controller2);
-        telemetry.addLine("version 1.24.2025.7.31");
+        telemetry.addLine("version 1.24.2025.8.27");
 
         telemetry.update();
     }

@@ -19,6 +19,10 @@ public class hardware {
     public DcMotor mV2; //motor vertical 2
     public DcMotor mO; //motor orizontal
 
+    public static DcMotor odoR = null;
+    public static DcMotor odoL = null;
+    public static DcMotor odoA = null;
+
     // Declararea servo-urilor
     public Servo specimen;
     public Servo claw;
@@ -46,6 +50,9 @@ public class hardware {
         mO = hardwareMap.get(DcMotor.class, "motorOriz");
         specimen = hardwareMap.get(Servo.class, "specimen");
         claw = hardwareMap.get(Servo.class, "claw");
+        odoR = hardwareMap.get(DcMotor.class, "placeHolder");
+        odoL = hardwareMap.get(DcMotor.class, "placeHolder");
+        odoA = hardwareMap.get(DcMotor.class, "placeHolder");
 
         /* La un drivetrain de tip mecanum motoarele din fata au sensul miscarii in fata
         insa la cele din spate, sensul de miscare este opus
@@ -78,5 +85,11 @@ public class hardware {
         mV1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         mV2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         mO.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        odoR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        odoL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        odoA.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        odoR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        odoL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        odoA.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 }
