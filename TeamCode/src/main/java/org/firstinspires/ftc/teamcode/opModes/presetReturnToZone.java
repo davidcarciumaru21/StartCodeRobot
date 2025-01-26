@@ -1,12 +1,8 @@
 package org.firstinspires.ftc.teamcode.opModes;
 
-// Import-uri din SDK
-
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-
-// Import-uri fisiere proprii
 
 import org.firstinspires.ftc.teamcode.hardware;
 
@@ -15,51 +11,43 @@ public class presetReturnToZone extends OpMode {
 
     //***************Declaration-of-values***************
 
-    final double WHEEL_DIAMETER = 10.4;
-    final double ENCODER_TICKS_PER_ROTATION = 2048;
-    final double TRACKWIDTH = 30.0; // distanta dintre odoR si odoL
+    hardware robot = new hardware(); // Instanțiem obiectul robot
 
-    double robotX = 0.0;
-    double robotY = 0.0;
-    double robotHeading = 0.0;
-
-    int rightEncoderPos = 0;
-    int leftEncoderPos = 0;
-    int previousRightEncoderPos = 0;
-    int previousLeftEncoderPos = 0;
-
-    double rightDistance = 0.0;
-    double leftDistance = 0.0;
-    double deltaRight = 0.0;
-    double deltaLeft = 0.0;
-
-    double deltaHeading;
-    double deltaX;
-    double robotHeadingDegrees;
-
-    public double leftXJoystick1, leftYJoystick1, rightXJoystick1; // valorile joystickurilor de la controller
+    // Declaram variabile pentru valorile joystickurilor de la controller
+    public double leftXJoystick1, leftYJoystick1, rightXJoystick1;
     double motorFRvolt, motorFLvolt, motorBRvolt, motorBLvolt;
 
-    hardware robot = new hardware();
+    double xPos = 0.0; // Poziția robotului pe axa X în cm
+    double yPos = 0.0; // Poziția robotului pe axa Y în cm
+    double heading = 0.0; // Orientarea robotului în radiani
+
+    int leftEncoderPos = 0;
+    int rightEncoderPos = 0;
+    int centerEncoderPos = 0;
+
+    int prevLeftEncoderPos = 0;
+    int prevRightEncoderPos = 0;
+    int prevCenterEncoderPos = 0;
+
+    //***************Constants***************
+
+    final double ENCODER_TICKS_PER_ROTATION = 2048; // Numărul de ticks pentru o rotație completă a encoderului
+    final double WHEEL_DIAMETER = 10.4; // Diametrul roților de odometrie în cm
+    final double TRACKWIDTH = 21; // Distanța între roțile de odometrie stânga și dreapta în cm
+    final double FORWARD_OFFSET = 17.5; // Distanța de la roata centrală la centrul robotului
+    final double treshHold = 1;
 
     //***************Methods***************
 
-    // verificam daca valorile introduse pentru a merge motorul se afla intr-un interval [-1;+1]
-    public boolean verifyMotorValues(double value){
-        return value >= 0 && value <= 1;
+    // Verifică dacă valoarea motorului este în intervalul valid [-1, 1]
+    public boolean verifyMotorValues(double value) {
+        return value >= -1 && value <= 1;
     }
 
-    /* Metoda moveMotorsByValues misca fiecare motor dupa valoarea specifica
-    fiecaruia in parametri*/
-
-    public void moveMotorsByValues(
-            double FRmotorValue, double FLmotorValue,
-            double BRmotorValue, double BLmotorValue)
-    {
-        // verificam ca valorile sa se afle intr-un interval [-1;+1]
+    // Setează viteza motoarelor pe baza valorilor date
+    public void moveMotorsByValues(double FRmotorValue, double FLmotorValue, double BRmotorValue, double BLmotorValue) {
         if (this.verifyMotorValues(FRmotorValue) && this.verifyMotorValues(FLmotorValue) &&
-                this.verifyMotorValues(BRmotorValue) && this.verifyMotorValues(BLmotorValue))
-        {
+                this.verifyMotorValues(BRmotorValue) && this.verifyMotorValues(BLmotorValue)) {
             robot.fr.setPower(FRmotorValue);
             robot.fl.setPower(FLmotorValue);
             robot.br.setPower(BRmotorValue);
@@ -67,139 +55,140 @@ public class presetReturnToZone extends OpMode {
         }
     }
 
-    // In aceasta metoda drivetrain-ul este condus cu ajutorul valorilor de la joystick
-    public void moveDriveTrain(){
-        // setam valorile ce ne intereseaza pentru miscarea robotului
-        leftYJoystick1 = gamepad1.left_stick_y;
-        leftXJoystick1 = -gamepad1.left_stick_x;
-        rightXJoystick1 = -gamepad1.right_stick_x;
-        // denominator este un numar ce face ca valorile pe care le preiau motoarele sa fie mai mici ca 1
-        double denominator = Math.max(Math.abs(leftYJoystick1) + Math.abs(leftXJoystick1)
-                + Math.abs(rightXJoystick1), 1);
+    // Controlul mișcării robotului pe baza joystickurilor
+    public void moveDriveTrain() {
+        leftYJoystick1 = gamepad1.left_stick_y;  // Mișcare pe axa Y (înainte/spate)
+        leftXJoystick1 = -gamepad1.left_stick_x; // Mișcare pe axa X (stânga/dreapta)
+        rightXJoystick1 = -gamepad1.right_stick_x; // Mișcare de rotație pe loc
 
-        // Calculam valorile cu care va merge fiecare motor
-        // Valoarea motorului este redata de o relatie alcatuita din leftY, leftX si rightX si de denominator
-        /*
-         * Fr = (y-x-rx)/d
-         * Fl = (y+x+rx)/d
-         * Br = (y+x-rx)/dz
-         * Bl = (y-x+rx)/d
-         */
+        // Calculăm un denominator pentru a normaliza mișcările joystick-urilor
+        double denominator = Math.max(Math.abs(leftYJoystick1) + Math.abs(leftXJoystick1) + Math.abs(rightXJoystick1), 1);
+
+        // Calculăm viteza fiecărui motor pe baza poziției joystick-urilor
         motorFRvolt = (leftYJoystick1 - leftXJoystick1 - rightXJoystick1) / denominator;
         motorFLvolt = (leftYJoystick1 + leftXJoystick1 + rightXJoystick1) / denominator;
         motorBRvolt = (leftYJoystick1 + leftXJoystick1 - rightXJoystick1) / denominator;
         motorBLvolt = (leftYJoystick1 - leftXJoystick1 + rightXJoystick1) / denominator;
 
-        // Miscatul propriu-zis al motoarelor prin intermediul valorilor calculate mai devreme
+        // Aplicăm valorile calculate pe fiecare motor
         this.moveMotorsByValues(motorFRvolt, motorFLvolt, motorBRvolt, motorBLvolt);
     }
 
+    // Actualizează odometria robotului pe baza datelor de la encodere
     public void updateOdometry() {
+        // Obținem pozițiile curente ale encoderelor
+        leftEncoderPos = robot.fl.getCurrentPosition();
+        rightEncoderPos = robot.odoDreapta.getCurrentPosition();
+        centerEncoderPos = robot.fr.getCurrentPosition();
 
-        // Obținem pozițiile curente ale encoder-elor
-        rightEncoderPos = robot.fr.getCurrentPosition(); // Poziția curentă a encoder-ului drept
-        leftEncoderPos = robot.fl.getCurrentPosition(); // Poziția curentă a encoder-ului stâng
+        // Calculăm schimbările de poziție (delta) ale encoderelor
+        double deltaLeftEncoderPos = leftEncoderPos - prevLeftEncoderPos;
+        double deltaRightEncoderPos = rightEncoderPos - prevRightEncoderPos;
+        double deltaCenterEncoderPos = centerEncoderPos - prevCenterEncoderPos;
 
-        // Calculăm diferențele de poziție între actualizarea curentă și anterioară
-        deltaRight = rightEncoderPos - previousRightEncoderPos; // Mișcarea roții drepte
-        deltaLeft = leftEncoderPos - previousLeftEncoderPos; // Mișcarea roții stângi
+        // Convertim ticks de encoder în distanțe parcurse de fiecare roată
+        double leftDistance = (deltaLeftEncoderPos / ENCODER_TICKS_PER_ROTATION) * (Math.PI * WHEEL_DIAMETER);
+        double rightDistance = (deltaRightEncoderPos / ENCODER_TICKS_PER_ROTATION) * (Math.PI * WHEEL_DIAMETER);
+        double centerDistance = (deltaCenterEncoderPos / ENCODER_TICKS_PER_ROTATION) * (Math.PI * WHEEL_DIAMETER);
 
-        // Calculăm distanța parcursă de fiecare roată în centimetri, folosind formula distanței circulare
-        rightDistance = (deltaRight / ENCODER_TICKS_PER_ROTATION) * (Math.PI * WHEEL_DIAMETER); // Distanța roții drepte
-        leftDistance = (deltaLeft / ENCODER_TICKS_PER_ROTATION) * (Math.PI * WHEEL_DIAMETER); // Distanța roții stângi
+        // Calculăm schimbarea de heading (rotație)
+        double phi = (leftDistance - rightDistance) / TRACKWIDTH;
 
-        // Calculăm schimbarea unghiului robotului, pe baza diferenței de distanță a roților
-        deltaHeading = (leftDistance - rightDistance) / TRACKWIDTH; // Diferența de unghi (în radiani)
-        robotHeading += deltaHeading; // Actualizăm orientarea robotului
+        // Calculăm deplasările robotului în axa X și Y
+        double deltaMiddlePos = (leftDistance + rightDistance) / 2.0;
+        double deltaPerpPos = centerDistance - FORWARD_OFFSET * phi;
 
-        // Convertim unghiul în radiani în grade, pentru a-l face mai ușor de înțeles și folosit
-        robotHeadingDegrees = Math.toDegrees(robotHeading); // Conversia unghiului din radiani în grade
+        // Actualizăm poziția robotului
+        double deltaX = deltaMiddlePos * Math.cos(heading) - deltaPerpPos * Math.sin(heading);
+        double deltaY = deltaMiddlePos * Math.sin(heading) + deltaPerpPos * Math.cos(heading);
 
-        // Calculăm distanța totală parcursă pe direcția înainte (pe axele X și Y)
-        deltaX = (leftDistance + rightDistance) / 2.0; // Mișcarea medie a robotului pe axa X
+        xPos += deltaX; // Actualizăm poziția X
+        yPos += deltaY; // Actualizăm poziția Y
+        heading += phi; // Actualizăm rotația (heading)
 
-        // Actualizăm pozițiile robotului pe axele X și Y folosind trigonometria
-        robotX += deltaX * Math.cos(robotHeading); // Actualizarea poziției pe axa X
-        robotY += deltaX * Math.sin(robotHeading); // Actualizarea poziției pe axa Y
-
-        if (deltaX < 0) {
-            robotX = -robotX; // If robot is moving left, negate the X value
-        }
-        if (robotY < 0) {
-            robotY = -robotY; // If robot is moving down, negate the Y value
-        }
-
-        // Salvăm pozițiile anterioare ale encoder-elor pentru următoarea actualizare
-        previousRightEncoderPos = rightEncoderPos; // Actualizăm poziția anterioară a encoder-ului drept
-        previousLeftEncoderPos = leftEncoderPos; // Actualizăm poziția anterioară a encoder-ului stâng
+        // Salvăm pozițiile encoderelor pentru următoarea actualizare
+        prevLeftEncoderPos = leftEncoderPos;
+        prevRightEncoderPos = rightEncoderPos;
+        prevCenterEncoderPos = centerEncoderPos;
     }
 
+    // Returnează poziția curentă a robotului (X, Y, Heading)
     public double[] getPosition() {
-        // Convertim unghiul robotului în grade și returnăm poziția ca un array
-        robotHeadingDegrees = Math.toDegrees(robotHeading); // Conversia unghiului în grade
-        return new double[] {robotX, robotY, robotHeadingDegrees}; // Returnăm poziția în format {X, Y, Heading (în grade)}
+        return new double[] {xPos, yPos, Math.toDegrees(heading)};
     }
 
-    public void returnToOrigin() {
-        double threshold = 0.5; // Pentru a fi sigur ca este aproape de zona
-
-        if (gamepad1.square) {
-            while (Math.abs(robotX) > threshold) { // Verificam daca nu cumva am ajuns deja la pozitia 0
-                this.updateOdometry();
-                this.getPosition();
-                if (robotY > threshold) {
-                    this.moveMotorsByValues(-1, -1, -1, -1);
-                } else if (robotY < -threshold) {
-                    this.moveMotorsByValues(1, 1, 1, 1);
-                }
+    public void resetX() {
+        while (Math.abs(xPos) > treshHold) { // Verificam daca nu cumva am ajuns deja la pozitia 0
+            // Miscam robotul astfel incat sa jaungem la pozitia 0
+            if (xPos > 0) {
+                this.moveMotorsByValues(-1, -1, -1, -1);
+            } else {
+                this.moveMotorsByValues(1, 1, 1, 1);
             }
-            this.moveMotorsByValues(0, 0, 0, 0);
-            while (Math.abs(robotY) > threshold) {
-                this.updateOdometry();
-                this.getPosition();
-                if (robotX > threshold) {
-                    this.moveMotorsByValues(1, -1, -1, 1);
-                } else if (robotX < -threshold) {
-                    this.moveMotorsByValues(-1, 1, 1, -1);
-                }
-
-                this.moveMotorsByValues(0, 0, 0, 0);
+        }
+        this.moveMotorsByValues(0, 0, 0, 0); // Stop the robot once the position is within the threshold
+    }
+    public void resetY () {
+        while (Math.abs(yPos) > treshHold) {  // Verificam daca nu cumva am ajuns deja la pozitia 0
+            // Miscam robotul astfel incat sa jaungem la pozitia 0
+            if (yPos > 0) {
+                this.moveMotorsByValues(1, -1, -1, 1);
+            } else {
+                this.moveMotorsByValues(-1, 1, 1, -1);
             }
-            this.moveMotorsByValues(0, 0, 0, 0);
+        }
+        this.moveMotorsByValues(0, 0, 0, 0); // Stop the robot once the position is within the threshold
+    }
+
+    // Ne intoarcem  cu robotul la pozitia initiala
+    public void returnToZone(){
+        if(gamepad1.square){
+            this.resetY();
+            this.resetX();
         }
     }
 
-    @Override
-    public void init(){
-        /*Initializam toate accesorile robotului, cum ar fi:
-            *   -Motoarele:
-            *       -fr - "motorFR" (Config - 0)
-            *       -fl - "motorFl" (Config - 1)
-            *       -br - "motorBR" (Config - 2)
-            *       -bl - "motorBL" (Config - 3)
-        */
-        robot.init(hardwareMap);
-        this.returnToOrigin();
+    // Cream o noua pozitie initiala
+    public void resetPosition(){
+        if(gamepad1.circle){
+            robot.fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            robot.fr.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            robot.odoDreapta.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        }
     }
 
     //***************Main-methods***************
 
     @Override
-    public void loop(){
-        this.updateOdometry();
-        this.moveDriveTrain();
+    public void init() {
+        /*Initializam toate accesorile robotului, cum ar fi:
+         *   -Motoarele:
+         *       -fr - "motorFR" (Config - 0)
+         *       -fl - "motorFl" (Config - 1)
+         *       -br - "motorBR" (Config - 2)
+         *       -bl - "motorBL" (Config - 3)
+         */
+        robot.init(hardwareMap); // Inițializăm hardware-ul robotului
+    }
+
+    @Override
+    public void loop() {
+        this.updateOdometry(); // Actualizăm odometria robotului
+        this.moveDriveTrain(); // Controlăm mișcarea robotului pe baza joystickurilor
+        this.returnToZone(); // Preset-ul pentru a ajunge inapoi la pozitia initiala
+        this.resetPosition(); // Resetam pozitia initiala
 
         //***************Telemetry***************
 
+        double[] position = this.getPosition();
         telemetry.addData("MotorFR", motorFRvolt);
         telemetry.addData("MotorFL", motorFLvolt);
         telemetry.addData("MotorBR", motorBRvolt);
         telemetry.addData("MotorBL", motorBLvolt);
-        telemetry.addData("x in cm", (this.getPosition())[0]);
-        telemetry.addData("y in cm", (this.getPosition())[1]);
-        telemetry.addData("angle in degrees", (this.getPosition())[2]);
+        telemetry.addData("X (cm)", position[0]);
+        telemetry.addData("Y (cm)", position[1]);
+        telemetry.addData("Heading (degrees)", position[2]);
         telemetry.addLine("version 1.26.2025.12.39");
-
         telemetry.update();
     }
 }

@@ -16,8 +16,8 @@ public class mainTeleOP extends OpMode{
     double leftXJoystick1, leftYJoystick1, rightXJoystick1, up, forward; // valorile joystickurilor de la controller
     double motorFRvolt, motorFLvolt, motorBRvolt, motorBLvolt;
     final int limMax = -5300;
-    final int limMin = 10;
-    final int limMaxOriz = 3000;
+    final int limMin = 0;
+    final int limMaxOriz = 1000;
     final int limMinOriz = 0;
     int posmV, posmO;
     final double speecimenClose = 0.0;
@@ -25,31 +25,8 @@ public class mainTeleOP extends OpMode{
     final double clawClose = 0.0;
     final double clasOpen = 0.5;
     boolean openSpecimen, openClaw;
-    final int[] colourGamepad1 = {255, 0, 0, 15000};
-    final int[] colourGamepad2 = {0, 0, 255, 15000};
-    boolean ps4Controller1 = true;
-    boolean ps4Controller2 = false;
-
-    // Felul in care vireaza gamepadu-rile la inceput
-    Gamepad.RumbleEffect effect = new Gamepad.RumbleEffect.Builder()
-            .addStep(1.0, 1.0, 250)
-            .addStep(0.0, 1.0, 250)
-            .addStep(1.0, 0.0, 250).build();
 
     //***************Methods***************
-
-    public void initGamepad(){
-
-        if (ps4Controller1) {
-            gamepad1.runRumbleEffect(effect);
-            gamepad1.setLedColor(colourGamepad1[0], colourGamepad1[1], colourGamepad1[2], colourGamepad1[3]);
-        }
-
-        if (ps4Controller2) {
-            gamepad2.runRumbleEffect(effect);
-            gamepad2.setLedColor(colourGamepad2[0], colourGamepad2[1], colourGamepad2[2], colourGamepad2[3]);
-        }
-    }
 
     public void initServo(){
         // setam pozitia servo-urilor la inceput
@@ -99,7 +76,7 @@ public class mainTeleOP extends OpMode{
         up = -gamepad2.left_stick_y;
 
         // Verificam daca output-ul cerut se afla in limite ori daca exista un voltaj pe joystick
-        if ((up > 0 && posmV + 100 * up >= limMax) || (up < 0 && posmV + 100 * up <= limMin)) {
+        if ((up > 0 && posmV + 100 * -up >= limMax) || (up < 0 && posmV + 100 * -up <= limMin)) {
             posmV -= 10 * up;
 
             robot.mV1.setTargetPosition(posmV);
@@ -108,8 +85,8 @@ public class mainTeleOP extends OpMode{
             robot.mV1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             robot.mV2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            robot.mV1.setPower(0.5);
-            robot.mV2.setPower(0.5);
+            robot.mV1.setPower(1);
+            robot.mV2.setPower(1);
             // Daca nu exista input mototoarele trebuie sa ramana pe pozitii
         } else {
             robot.mV1.setTargetPosition(posmV);
@@ -118,8 +95,8 @@ public class mainTeleOP extends OpMode{
             robot.mV1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             robot.mV2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            robot.mV1.setPower(0.1);
-            robot.mV2.setPower(0.1);
+            robot.mV1.setPower(1);
+            robot.mV2.setPower(1);
         }
 
     }
@@ -128,19 +105,19 @@ public class mainTeleOP extends OpMode{
         forward = -gamepad2.right_stick_x;
 
         // Verificam daca output-ul cerut se afla in limite ori daca exista un voltaj pe joystick
-        if ((forward > 0 && posmO + 100 * forward <= limMaxOriz) || (forward < 0 && posmO + 100 * forward >= limMinOriz)) {
-            posmO -= 10 * forward;
+        if ((forward < 0 && posmO + 50 * -forward <= limMaxOriz) || (forward > 0 && posmO + 50 * -forward >= limMinOriz)) {
+            posmO -= 50 * forward;
 
             robot.mO.setTargetPosition(posmO);
             robot.mO.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            robot.mO.setPower(0.5);
+            robot.mO.setPower(1);
             // Daca nu exista input mototoarele trebuie sa ramana pe pozitii
         } else {
             robot.mO.setTargetPosition(posmO);
             robot.mO.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            robot.mO.setPower(0.1);
+            robot.mO.setPower(1);
         }
     }
 
@@ -209,8 +186,6 @@ public class mainTeleOP extends OpMode{
 
         this.initArms(); // Initializarea bratelelor
         this.initServo(); // initializarea servo-urilor
-
-        this.initGamepad();
     }
 
     @Override
@@ -233,8 +208,6 @@ public class mainTeleOP extends OpMode{
         telemetry.addData("mO", posmO);
         telemetry.addData("specimentServo", openSpecimen);
         telemetry.addData("clawServo", openClaw);
-        telemetry.addData("ps4Controller1", ps4Controller1);
-        telemetry.addData("ps4Controller2", ps4Controller2);
         telemetry.addLine("version 1.24.2025.8.27");
 
         telemetry.update();

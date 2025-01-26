@@ -12,7 +12,7 @@ public class gamepadSettings extends OpMode {
     final int[] colourGamepad1 = {255, 0, 0, 15000};
     final int[] colourGamepad2 = {0, 0, 255, 15000};
     boolean ps4Controller1 = true;
-    boolean ps4Controller2 = false;
+    boolean ps4Controller2 = true;
 
     Gamepad.RumbleEffect effect = new Gamepad.RumbleEffect.Builder()
             .addStep(1.0, 1.0, 250)
