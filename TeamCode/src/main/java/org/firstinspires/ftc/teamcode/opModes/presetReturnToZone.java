@@ -94,42 +94,11 @@ public class presetReturnToZone extends OpMode {
         this.moveMotorsByValues(motorFRvolt, motorFLvolt, motorBRvolt, motorBLvolt);
     }
 
-    public void moveMotorsByTicks(int FRtargetValue, int FLtargetValue,
-                                  int BRtargetValue, int BLtargetValue){
-        robot.fr.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.br.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.bl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.fr.setTargetPosition(FRtargetValue);
-        robot.fl.setTargetPosition(FLtargetValue);
-        robot.br.setTargetPosition(BRtargetValue);
-        robot.bl.setTargetPosition(BLtargetValue);
-        robot.fr.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.fl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.br.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.bl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        robot.fr.setPower(0.5);
-        robot.fl.setPower(0.5);
-        robot.br.setPower(0.5);
-        robot.bl.setPower(0.5);
-        while (robot.fr.isBusy() || robot.fl.isBusy() || robot.br.isBusy() || robot.bl.isBusy()) {
-            telemetry.addLine("Returning to zone");
-        }
-        robot.fr.setPower(0);
-        robot.fl.setPower(0);
-        robot.br.setPower(0);
-        robot.bl.setPower(0);
-        robot.fr.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        robot.fl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        robot.br.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        robot.bl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-    }
-
     public void updateOdometry() {
 
         // Obținem pozițiile curente ale encoder-elor
-        rightEncoderPos = robot.odoR.getCurrentPosition(); // Poziția curentă a encoder-ului drept
-        leftEncoderPos = robot.odoL.getCurrentPosition(); // Poziția curentă a encoder-ului stâng
+        rightEncoderPos = robot.fr.getCurrentPosition(); // Poziția curentă a encoder-ului drept
+        leftEncoderPos = robot.fl.getCurrentPosition(); // Poziția curentă a encoder-ului stâng
 
         // Calculăm diferențele de poziție între actualizarea curentă și anterioară
         deltaRight = rightEncoderPos - previousRightEncoderPos; // Mișcarea roții drepte
@@ -171,32 +140,32 @@ public class presetReturnToZone extends OpMode {
         return new double[] {robotX, robotY, robotHeadingDegrees}; // Returnăm poziția în format {X, Y, Heading (în grade)}
     }
 
-    public int cmToTicks(double distanceCm) {
-
-        // Facem conversia dintre cm si tcik-uri
-        double wheelCircumference = Math.PI * WHEEL_DIAMETER;
-        double ticksPerCm = ENCODER_TICKS_PER_ROTATION / wheelCircumference;
-
-        int ticks = (int)(distanceCm * ticksPerCm);
-
-        return ticks;
-    }
-
     public void returnToOrigin() {
         double threshold = 0.5; // Pentru a fi sigur ca este aproape de zona
 
         if (gamepad1.square) {
-            while (Math.abs(robotX) > threshold || Math.abs(robotY) > threshold) { // Verificam daca nu cumva am ajuns deja la pozitia 0
-                if (Math.abs(robotX) > threshold) {
-                    int xTicks = cmToTicks(-robotX);
-                    moveMotorsByTicks(xTicks, -xTicks, -xTicks, xTicks); // Resetam pozitia x
-                }
-
-                if (Math.abs(robotY) > threshold) {  // Verificam daca nu cumva am ajuns deja la pozitia 0
-                    int yTicks = cmToTicks(-robotY);
-                    moveMotorsByTicks(yTicks, yTicks, yTicks, yTicks); // Resetam pozitia y
+            while (Math.abs(robotX) > threshold) { // Verificam daca nu cumva am ajuns deja la pozitia 0
+                this.updateOdometry();
+                this.getPosition();
+                if (robotY > threshold) {
+                    this.moveMotorsByValues(-1, -1, -1, -1);
+                } else if (robotY < -threshold) {
+                    this.moveMotorsByValues(1, 1, 1, 1);
                 }
             }
+            this.moveMotorsByValues(0, 0, 0, 0);
+            while (Math.abs(robotY) > threshold) {
+                this.updateOdometry();
+                this.getPosition();
+                if (robotX > threshold) {
+                    this.moveMotorsByValues(1, -1, -1, 1);
+                } else if (robotX < -threshold) {
+                    this.moveMotorsByValues(-1, 1, 1, -1);
+                }
+
+                this.moveMotorsByValues(0, 0, 0, 0);
+            }
+            this.moveMotorsByValues(0, 0, 0, 0);
         }
     }
 
