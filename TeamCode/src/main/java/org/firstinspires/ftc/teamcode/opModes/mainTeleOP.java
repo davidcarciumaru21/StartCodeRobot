@@ -15,18 +15,123 @@ public class mainTeleOP extends OpMode{
     hardware robot = new hardware(); // creeam obiectul responsabil de harware-ul robotului
     double leftXJoystick1, leftYJoystick1, rightXJoystick1, up, forward; // valorile joystickurilor de la controller
     double motorFRvolt, motorFLvolt, motorBRvolt, motorBLvolt;
+
     final int limMax = -5300;
     final int limMin = 0;
     final int limMaxOriz = 1000;
     final int limMinOriz = 0;
     int posmV, posmO;
+
     final double speecimenClose = 0.0;
     final double specimentOpen = 0.5;
     final double clawClose = 0.0;
     final double clasOpen = 0.5;
     boolean openSpecimen, openClaw;
 
+    double xPos = 0.0; // Poziția robotului pe axa X în cm
+    double yPos = 0.0; // Poziția robotului pe axa Y în cm
+    double heading = 0.0; // Orientarea robotului în radiani
+
+    int leftEncoderPos = 0;
+    int rightEncoderPos = 0;
+    int centerEncoderPos = 0;
+
+    int prevLeftEncoderPos = 0;
+    int prevRightEncoderPos = 0;
+    int prevCenterEncoderPos = 0;
+
+    //***************Constants***************
+
+    final double ENCODER_TICKS_PER_ROTATION = 2048; // Numărul de ticks pentru o rotație completă a encoderului
+    final double WHEEL_DIAMETER = 10.4; // Diametrul roților de odometrie în cm
+    final double TRACKWIDTH = 21; // Distanța între roțile de odometrie stânga și dreapta în cm
+    final double FORWARD_OFFSET = 17.5; // Distanța de la roata centrală la centrul robotului
+    final double treshHold = 1;
+
     //***************Methods***************
+
+    // Actualizează odometria robotului pe baza datelor de la encodere
+    public void updateOdometry() {
+        // Obținem pozițiile curente ale encoderelor
+        leftEncoderPos = robot.fl.getCurrentPosition();
+        rightEncoderPos = robot.odoDreapta.getCurrentPosition();
+        centerEncoderPos = robot.fr.getCurrentPosition();
+
+        // Calculăm schimbările de poziție (delta) ale encoderelor
+        double deltaLeftEncoderPos = leftEncoderPos - prevLeftEncoderPos;
+        double deltaRightEncoderPos = rightEncoderPos - prevRightEncoderPos;
+        double deltaCenterEncoderPos = centerEncoderPos - prevCenterEncoderPos;
+
+        // Convertim ticks de encoder în distanțe parcurse de fiecare roată
+        double leftDistance = (deltaLeftEncoderPos / ENCODER_TICKS_PER_ROTATION) * (Math.PI * WHEEL_DIAMETER);
+        double rightDistance = (deltaRightEncoderPos / ENCODER_TICKS_PER_ROTATION) * (Math.PI * WHEEL_DIAMETER);
+        double centerDistance = (deltaCenterEncoderPos / ENCODER_TICKS_PER_ROTATION) * (Math.PI * WHEEL_DIAMETER);
+
+        // Calculăm schimbarea de heading (rotație)
+        double phi = (leftDistance - rightDistance) / TRACKWIDTH;
+
+        // Calculăm deplasările robotului în axa X și Y
+        double deltaMiddlePos = (leftDistance + rightDistance) / 2.0;
+        double deltaPerpPos = centerDistance - FORWARD_OFFSET * phi;
+
+        // Actualizăm poziția robotului
+        double deltaX = deltaMiddlePos * Math.cos(heading) - deltaPerpPos * Math.sin(heading);
+        double deltaY = deltaMiddlePos * Math.sin(heading) + deltaPerpPos * Math.cos(heading);
+
+        xPos += deltaX; // Actualizăm poziția X
+        yPos += deltaY; // Actualizăm poziția Y
+        heading += phi; // Actualizăm rotația (heading)
+
+        // Salvăm pozițiile encoderelor pentru următoarea actualizare
+        prevLeftEncoderPos = leftEncoderPos;
+        prevRightEncoderPos = rightEncoderPos;
+        prevCenterEncoderPos = centerEncoderPos;
+    }
+
+    // Returnează poziția curentă a robotului (X, Y, Heading)
+    public double[] getPosition() {
+        return new double[] {xPos, yPos, Math.toDegrees(heading)};
+    }
+
+    public void resetX() {
+        while (Math.abs(xPos) > treshHold) { // Verificam daca nu cumva am ajuns deja la pozitia 0
+            // Miscam robotul astfel incat sa jaungem la pozitia 0
+            if (xPos > 0) {
+                this.moveMotorsByValues(-1, -1, -1, -1);
+            } else {
+                this.moveMotorsByValues(1, 1, 1, 1);
+            }
+        }
+        this.moveMotorsByValues(0, 0, 0, 0); // Stop the robot once the position is within the threshold
+    }
+    public void resetY () {
+        while (Math.abs(yPos) > treshHold) {  // Verificam daca nu cumva am ajuns deja la pozitia 0
+            // Miscam robotul astfel incat sa jaungem la pozitia 0
+            if (yPos > 0) {
+                this.moveMotorsByValues(1, -1, -1, 1);
+            } else {
+                this.moveMotorsByValues(-1, 1, 1, -1);
+            }
+        }
+        this.moveMotorsByValues(0, 0, 0, 0); // Stop the robot once the position is within the threshold
+    }
+
+    // Ne intoarcem  cu robotul la pozitia initiala
+    public void returnToZone(){
+        if(gamepad1.square){
+            this.resetY();
+            this.resetX();
+        }
+    }
+
+    // Cream o noua pozitie initiala
+    public void resetPosition(){
+        if(gamepad1.circle){
+            robot.fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            robot.fr.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            robot.odoDreapta.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        }
+    }
 
     public void initServo(){
         // setam pozitia servo-urilor la inceput
@@ -191,10 +296,15 @@ public class mainTeleOP extends OpMode{
     @Override
     public void loop(){
 
-        this.moveDriveTrain();
-        this.armMoveUp();
-        this.armMoveLateral();
-        this.miscareServo();
+        this.moveDriveTrain(); // Controlăm mișcarea robotului pe baza joystickurilor
+        this.armMoveUp(); // Miscam bratul vertical
+        this.armMoveLateral(); // Miscam bratul orizontal
+        this.miscareServo(); // Miscam servo-urile
+        this.returnToZone(); // Preset-ul pentru a ajunge inapoi la pozitia initiala
+        this.resetPosition(); // Resetam pozitia initiala
+        this.updateOdometry(); // Actualizăm odometria robotului
+
+        double[] position = this.getPosition();
 
         //***************Telemetry***************
 
@@ -208,7 +318,10 @@ public class mainTeleOP extends OpMode{
         telemetry.addData("mO", posmO);
         telemetry.addData("specimentServo", openSpecimen);
         telemetry.addData("clawServo", openClaw);
-        telemetry.addLine("version 1.24.2025.8.27");
+        telemetry.addData("X (cm)", position[0]);
+        telemetry.addData("Y (cm)", position[1]);
+        telemetry.addData("Heading (degrees)", position[2]);
+        telemetry.addLine("version 1.26.2025.23.57");
 
         telemetry.update();
     }

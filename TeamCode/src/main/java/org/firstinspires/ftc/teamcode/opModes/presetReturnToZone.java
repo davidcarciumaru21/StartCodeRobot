@@ -119,6 +119,7 @@ public class presetReturnToZone extends OpMode {
 
     public void resetX() {
         while (Math.abs(xPos) > treshHold) { // Verificam daca nu cumva am ajuns deja la pozitia 0
+            this.updateOdometry();
             // Miscam robotul astfel incat sa jaungem la pozitia 0
             if (xPos > 0) {
                 this.moveMotorsByValues(-1, -1, -1, -1);
@@ -130,6 +131,7 @@ public class presetReturnToZone extends OpMode {
     }
     public void resetY () {
         while (Math.abs(yPos) > treshHold) {  // Verificam daca nu cumva am ajuns deja la pozitia 0
+            this.updateOdometry();
             // Miscam robotul astfel incat sa jaungem la pozitia 0
             if (yPos > 0) {
                 this.moveMotorsByValues(1, -1, -1, 1);
@@ -178,9 +180,10 @@ public class presetReturnToZone extends OpMode {
         this.returnToZone(); // Preset-ul pentru a ajunge inapoi la pozitia initiala
         this.resetPosition(); // Resetam pozitia initiala
 
+        double[] position = this.getPosition();
+
         //***************Telemetry***************
 
-        double[] position = this.getPosition();
         telemetry.addData("MotorFR", motorFRvolt);
         telemetry.addData("MotorFL", motorFLvolt);
         telemetry.addData("MotorBR", motorBRvolt);
@@ -188,7 +191,7 @@ public class presetReturnToZone extends OpMode {
         telemetry.addData("X (cm)", position[0]);
         telemetry.addData("Y (cm)", position[1]);
         telemetry.addData("Heading (degrees)", position[2]);
-        telemetry.addLine("version 1.26.2025.12.39");
+        telemetry.addLine("version 1.26.2025.23.57");
         telemetry.update();
     }
 }
