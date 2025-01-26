@@ -1,17 +1,23 @@
 package org.firstinspires.ftc.teamcode.opModes;
 
+// Import-uri din SDK
+
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+
+// Import-uri fisiere proprii
 
 import org.firstinspires.ftc.teamcode.hardware;
 
 @TeleOp(name = "PresetReturnToZone", group = "Presets")
 public class presetReturnToZone extends OpMode {
 
+    //***************Declaration-of-values***************
+
     final double WHEEL_DIAMETER = 10.4;
-    final double ENCODER_TICKS_PER_ROTATION = 8.32;
-    final double TRACKWIDTH = 30.0;
+    final double ENCODER_TICKS_PER_ROTATION = 2048;
+    final double TRACKWIDTH = 30.0; // distanta dintre odoR si odoL
 
     double robotX = 0.0;
     double robotY = 0.0;
@@ -35,6 +41,8 @@ public class presetReturnToZone extends OpMode {
     double motorFRvolt, motorFLvolt, motorBRvolt, motorBLvolt;
 
     hardware robot = new hardware();
+
+    //***************Methods***************
 
     // verificam daca valorile introduse pentru a merge motorul se afla intr-un interval [-1;+1]
     public boolean verifyMotorValues(double value){
@@ -165,6 +173,7 @@ public class presetReturnToZone extends OpMode {
 
     public int cmToTicks(double distanceCm) {
 
+        // Facem conversia dintre cm si tcik-uri
         double wheelCircumference = Math.PI * WHEEL_DIAMETER;
         double ticksPerCm = ENCODER_TICKS_PER_ROTATION / wheelCircumference;
 
@@ -174,31 +183,44 @@ public class presetReturnToZone extends OpMode {
     }
 
     public void returnToOrigin() {
-        double threshold = 0.5;
+        double threshold = 0.5; // Pentru a fi sigur ca este aproape de zona
 
-        while (Math.abs(robotX) > threshold || Math.abs(robotY) > threshold) {
-            if (Math.abs(robotX) > threshold) {
-                int xTicks = cmToTicks(-robotX);
-                moveMotorsByTicks(xTicks, -xTicks, -xTicks, xTicks);
-            }
+        if (gamepad1.square) {
+            while (Math.abs(robotX) > threshold || Math.abs(robotY) > threshold) { // Verificam daca nu cumva am ajuns deja la pozitia 0
+                if (Math.abs(robotX) > threshold) {
+                    int xTicks = cmToTicks(-robotX);
+                    moveMotorsByTicks(xTicks, -xTicks, -xTicks, xTicks); // Resetam pozitia x
+                }
 
-            if (Math.abs(robotY) > threshold) {
-                int yTicks = cmToTicks(-robotY);
-                moveMotorsByTicks(yTicks, yTicks, yTicks, yTicks);
+                if (Math.abs(robotY) > threshold) {  // Verificam daca nu cumva am ajuns deja la pozitia 0
+                    int yTicks = cmToTicks(-robotY);
+                    moveMotorsByTicks(yTicks, yTicks, yTicks, yTicks); // Resetam pozitia y
+                }
             }
         }
     }
 
     @Override
     public void init(){
+        /*Initializam toate accesorile robotului, cum ar fi:
+            *   -Motoarele:
+            *       -fr - "motorFR" (Config - 0)
+            *       -fl - "motorFl" (Config - 1)
+            *       -br - "motorBR" (Config - 2)
+            *       -bl - "motorBL" (Config - 3)
+        */
         robot.init(hardwareMap);
         this.returnToOrigin();
     }
+
+    //***************Main-methods***************
 
     @Override
     public void loop(){
         this.updateOdometry();
         this.moveDriveTrain();
+
+        //***************Telemetry***************
 
         telemetry.addData("MotorFR", motorFRvolt);
         telemetry.addData("MotorFL", motorFLvolt);
