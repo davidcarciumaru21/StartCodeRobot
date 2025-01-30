@@ -1,10 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
 
 public class hardware {
 
@@ -24,6 +23,9 @@ public class hardware {
     public Servo claw;
 
     public DcMotor odoDreapta;
+
+    public TouchSensor TSL;
+    public TouchSensor TSR;
 
     private HardwareMap hardwareMap = null;
 
@@ -49,6 +51,8 @@ public class hardware {
         specimen = hardwareMap.get(Servo.class, "specimen");
         claw = hardwareMap.get(Servo.class, "claw");
         odoDreapta = hardwareMap.get(DcMotor.class, "ododreapta");
+        TSL = hardwareMap.get(TouchSensor.class, "touch_sensor_name");
+        TSR = hardwareMap.get(TouchSensor.class, "touch_sensor_name");
 
         /* La un drivetrain de tip mecanum motoarele din fata au sensul miscarii in fata
         insa la cele din spate, sensul de miscare este opus

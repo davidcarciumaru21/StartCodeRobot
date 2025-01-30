@@ -76,37 +76,31 @@ public class presetReturnToZone extends OpMode {
 
     // Actualizează odometria robotului pe baza datelor de la encodere
     public void updateOdometry() {
-        // Obținem pozițiile curente ale encoderelor
+
         leftEncoderPos = robot.fl.getCurrentPosition();
         rightEncoderPos = robot.odoDreapta.getCurrentPosition();
         centerEncoderPos = robot.fr.getCurrentPosition();
 
-        // Calculăm schimbările de poziție (delta) ale encoderelor
         double deltaLeftEncoderPos = leftEncoderPos - prevLeftEncoderPos;
         double deltaRightEncoderPos = rightEncoderPos - prevRightEncoderPos;
         double deltaCenterEncoderPos = centerEncoderPos - prevCenterEncoderPos;
 
-        // Convertim ticks de encoder în distanțe parcurse de fiecare roată
         double leftDistance = (deltaLeftEncoderPos / ENCODER_TICKS_PER_ROTATION) * (Math.PI * WHEEL_DIAMETER);
         double rightDistance = (deltaRightEncoderPos / ENCODER_TICKS_PER_ROTATION) * (Math.PI * WHEEL_DIAMETER);
         double centerDistance = (deltaCenterEncoderPos / ENCODER_TICKS_PER_ROTATION) * (Math.PI * WHEEL_DIAMETER);
 
-        // Calculăm schimbarea de heading (rotație)
         double phi = (leftDistance - rightDistance) / TRACKWIDTH;
 
-        // Calculăm deplasările robotului în axa X și Y
         double deltaMiddlePos = (leftDistance + rightDistance) / 2.0;
         double deltaPerpPos = centerDistance - FORWARD_OFFSET * phi;
 
-        // Actualizăm poziția robotului
         double deltaX = deltaMiddlePos * Math.cos(heading) - deltaPerpPos * Math.sin(heading);
         double deltaY = deltaMiddlePos * Math.sin(heading) + deltaPerpPos * Math.cos(heading);
 
-        xPos += deltaX; // Actualizăm poziția X
-        yPos += deltaY; // Actualizăm poziția Y
-        heading += phi; // Actualizăm rotația (heading)
+        xPos += deltaX;
+        yPos += deltaY;
+        heading += phi;
 
-        // Salvăm pozițiile encoderelor pentru următoarea actualizare
         prevLeftEncoderPos = leftEncoderPos;
         prevRightEncoderPos = rightEncoderPos;
         prevCenterEncoderPos = centerEncoderPos;
@@ -118,28 +112,49 @@ public class presetReturnToZone extends OpMode {
     }
 
     public void resetX() {
-        while (Math.abs(xPos) > treshHold) { // Verificam daca nu cumva am ajuns deja la pozitia 0
+        double startTime = System.currentTimeMillis();
+        double timeout = 5000;
+        double previousXPos = xPos;
+
+        while (Math.abs(xPos) > treshHold && (System.currentTimeMillis() - startTime) < timeout) {
             this.updateOdometry();
-            // Miscam robotul astfel incat sa jaungem la pozitia 0
+
+            if (Math.abs(previousXPos - xPos) < 0.1) {
+                break;
+            }
+            previousXPos = xPos;
+
+            double power = Math.min(0.5, Math.abs(xPos) * 0.1);
             if (xPos > 0) {
-                this.moveMotorsByValues(-1, -1, -1, -1);
+                this.moveMotorsByValues(-power, -power, -power, -power);
             } else {
-                this.moveMotorsByValues(1, 1, 1, 1);
+                this.moveMotorsByValues(power, power, power, power);
             }
         }
-        this.moveMotorsByValues(0, 0, 0, 0); // Stop the robot once the position is within the threshold
+        this.moveMotorsByValues(0, 0, 0, 0);
     }
-    public void resetY () {
-        while (Math.abs(yPos) > treshHold) {  // Verificam daca nu cumva am ajuns deja la pozitia 0
+
+    public void resetY() {
+        double startTime = System.currentTimeMillis();
+        double timeout = 5000;
+        double previousYPos = yPos;
+
+        while (Math.abs(yPos) > treshHold && (System.currentTimeMillis() - startTime) < timeout) {
             this.updateOdometry();
-            // Miscam robotul astfel incat sa jaungem la pozitia 0
+
+            if (Math.abs(previousYPos - yPos) < 0.1) {
+                break;
+            }
+            previousYPos = yPos;
+
+            double power = Math.min(0.5, Math.abs(yPos) * 0.1);
             if (yPos > 0) {
-                this.moveMotorsByValues(1, -1, -1, 1);
+                this.moveMotorsByValues(power, -power, -power, power);
             } else {
-                this.moveMotorsByValues(-1, 1, 1, -1);
+                this.moveMotorsByValues(-power, power, power, -power);
             }
         }
-        this.moveMotorsByValues(0, 0, 0, 0); // Stop the robot once the position is within the threshold
+        this.moveMotorsByValues(0, 0, 0, 0);
     }
 
     // Ne intoarcem  cu robotul la pozitia initiala
@@ -151,11 +166,15 @@ public class presetReturnToZone extends OpMode {
     }
 
     // Cream o noua pozitie initiala
-    public void resetPosition(){
-        if(gamepad1.circle){
+    public void resetPosition() {
+        if (gamepad1.circle) {
             robot.fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             robot.fr.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             robot.odoDreapta.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+            xPos = 0.0;
+            yPos = 0.0;
+            heading = 0.0;
         }
     }
 
@@ -171,6 +190,14 @@ public class presetReturnToZone extends OpMode {
          *       -bl - "motorBL" (Config - 3)
          */
         robot.init(hardwareMap); // Inițializăm hardware-ul robotului
+
+        robot.fr.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.odoDreapta.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        robot.fr.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        robot.fl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        robot.odoDreapta.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
 
     @Override
@@ -191,7 +218,7 @@ public class presetReturnToZone extends OpMode {
         telemetry.addData("X (cm)", position[0]);
         telemetry.addData("Y (cm)", position[1]);
         telemetry.addData("Heading (degrees)", position[2]);
-        telemetry.addLine("version 1.26.2025.23.57");
+        telemetry.addLine("version 1.31.2025.1.01");
         telemetry.update();
     }
 }

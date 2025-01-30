@@ -1,33 +1,16 @@
 package org.firstinspires.ftc.teamcode.opModes;
 
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
-import org.firstinspires.ftc.teamcode.hardware; // Importam hardware-ul
+import org.firstinspires.ftc.teamcode.hardware;
 
 @TeleOp(name = "mainTeleOP", group = "TeleOP")
-public class mainTeleOP extends OpMode{
-
-    //***************Declaration-of-values***************
-
+public class presetSpecimene  extends OpMode {
     hardware robot = new hardware(); // creeam obiectul responsabil de harware-ul robotului
     double leftXJoystick1, leftYJoystick1, rightXJoystick1, up, forward; // valorile joystickurilor de la controller
     double motorFRvolt, motorFLvolt, motorBRvolt, motorBLvolt;
-
-    final int limMax = -5300;
-    final int limMin = 0;
-    final int limMaxOriz = 1000;
-    final int limMinOriz = 0;
-    int posmV, posmO;
-
-    final double speecimenClose = 0.0;
-    final double specimentOpen = 0.5;
-    final double clawClose = 0.0;
-    final double clasOpen = 0.5;
-    boolean openSpecimen, openClaw;
-
     double xPos = 0.0; // Poziția robotului pe axa X în cm
     double yPos = 0.0; // Poziția robotului pe axa Y în cm
     double heading = 0.0; // Orientarea robotului în radiani
@@ -45,6 +28,13 @@ public class mainTeleOP extends OpMode{
     boolean TSLt = false;
     boolean TSRt = false;
 
+    final int limMax = -5300;
+    final int limMin = 10;
+    final int limMaxOriz = 3000;
+    final int limMinOriz = 0;
+    int posmV, posmO;
+
+
     //***************Constants***************
 
     final double ENCODER_TICKS_PER_ROTATION = 2048; // Numărul de ticks pentru o rotație completă a encoderului
@@ -54,30 +44,6 @@ public class mainTeleOP extends OpMode{
     final double treshHold = 1;
 
     //***************Methods***************
-
-    // Mergem in fata pana ne lovim de ceva
-    public void goUntilObstacle(double speed) {
-        if (gamepad1.cross) {
-            speed = -speed;
-            while (TSLv < 0.1 && TSRv < 0.1) {
-                moveMotorsByValues(speed, speed, speed, speed);
-            }
-            moveMotorsByValues(0, 0, 0, 0);
-            if (TSLv > 0 && TSRv < 0.1) {
-                while (TSRv < 0.1) {
-                    moveMotorsByValues(speed, 0, speed, 0);
-                }
-            } else if (TSRv > 0 && TSLv < 0.1) {
-                while (TSLv < 0.1) {
-                    moveMotorsByValues(0, speed, 0, speed);
-                }
-
-            } else {
-                moveMotorsByValues(0, 0, 0, 0);
-            }
-            moveMotorsByValues(0, 0, 0, 0);
-        }
-    }
 
     // Actualizează odometria robotului pe baza datelor de la encodere
     public void updateOdometry() {
@@ -215,164 +181,6 @@ public class mainTeleOP extends OpMode{
         this.moveMotorsByValues(0, 0, 0, 0); // Oprire motoare
     }
 
-    public void initServo(){
-        // setam pozitia servo-urilor la inceput
-        robot.specimen.setPosition(speecimenClose);
-        robot.claw.setPosition(clawClose);
-        openSpecimen = false;
-        openClaw = false;
-    }
-
-    public void miscareServo(){
-        // miscarea servo-ului ce se ocupa de specimene
-        if(gamepad2.dpad_up){
-            robot.specimen.setPosition(specimentOpen);
-            openSpecimen = true;
-        } else if(gamepad2.dpad_down){
-            robot.specimen.setPosition(speecimenClose);
-            openSpecimen = false;
-        }
-
-        // miscarea gharei
-        if(gamepad2.dpad_right){
-            robot.claw.setPosition(clasOpen);
-            openClaw = true;
-        } else if(gamepad2.dpad_left){
-            robot.claw.setPosition(clawClose);
-            openClaw = false;
-        }
-    }
-
-    public void initArms(){
-        // ia pozitia actuala a bratului vertical pentru a seta un target position initial
-        posmV = robot.mV1.getCurrentPosition();
-
-        // initializam motoarele pentru a merge cu ajutorul encoder-elor
-
-        robot.mV1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.mV1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        robot.mV2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.mV2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-        robot.mO.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.mO.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    }
-
-    public void armMoveUp() {
-
-        up = -gamepad2.left_stick_y;
-
-        // Verificam daca output-ul cerut se afla in limite ori daca exista un voltaj pe joystick
-        if ((up > 0 && posmV + 100 * -up >= limMax) || (up < 0 && posmV + 100 * -up <= limMin)) {
-            posmV -= 10 * up;
-
-            robot.mV1.setTargetPosition(posmV);
-            robot.mV2.setTargetPosition(posmV);
-
-            robot.mV1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.mV2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            robot.mV1.setPower(1);
-            robot.mV2.setPower(1);
-            // Daca nu exista input mototoarele trebuie sa ramana pe pozitii
-        } else {
-            robot.mV1.setTargetPosition(posmV);
-            robot.mV2.setTargetPosition(posmV);
-
-            robot.mV1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.mV2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            robot.mV1.setPower(1);
-            robot.mV2.setPower(1);
-        }
-
-    }
-
-    public void armMoveLateral() {
-        forward = -gamepad2.right_stick_x;
-
-        // Verificam daca output-ul cerut se afla in limite ori daca exista un voltaj pe joystick
-        if ((forward < 0 && posmO + 50 * -forward <= limMaxOriz) || (forward > 0 && posmO + 50 * -forward >= limMinOriz)) {
-            posmO -= 50 * forward;
-
-            robot.mO.setTargetPosition(posmO);
-            robot.mO.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            robot.mO.setPower(1);
-            // Daca nu exista input mototoarele trebuie sa ramana pe pozitii
-        } else {
-            robot.mO.setTargetPosition(posmO);
-            robot.mO.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            robot.mO.setPower(1);
-        }
-    }
-
-    // Preset ca sa mergi la pozitia maxima de sus
-    public void goUp(){
-        if(gamepad2.dpad_up) {
-            robot.mV1.setTargetPosition(limMax + 100);
-            robot.mV2.setTargetPosition(limMax + 100);
-
-            robot.mV1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.mV2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            robot.mV1.setPower(0.5);
-            robot.mV2.setPower(0.5);
-        }
-        if (robot.mV1.getCurrentPosition() >= robot.mV1.getTargetPosition() &&
-                robot.mV2.getCurrentPosition() >= robot.mV2.getTargetPosition()) {
-            robot.mV1.setPower(0);
-            robot.mV2.setPower(0);
-        }
-    }
-
-    // Preset ca sa mergi la pozitia maxima de jos
-    public void goDown(){
-        if(gamepad1.dpad_down) {
-            robot.mV1.setTargetPosition(limMin - 100);
-            robot.mV2.setTargetPosition(limMin - 100);
-
-            robot.mV1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            robot.mV2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            robot.mV1.setPower(0.5);
-            robot.mV2.setPower(0.5);
-        }
-        if (robot.mV1.getCurrentPosition() <= robot.mV1.getTargetPosition() &&
-                robot.mV2.getCurrentPosition() <= robot.mV2.getTargetPosition()) {
-            robot.mV1.setPower(0);
-            robot.mV2.setPower(0);
-        }
-    }
-
-    // Preset ca sa mergi la pozitia maxima din dreapta
-    public void goRight(){
-        if(gamepad1.dpad_right) {
-            robot.mO.setTargetPosition(limMaxOriz - 100);
-            robot.mO.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            robot.mO.setPower(0.5);
-        }
-        if (robot.mO.getCurrentPosition() >= robot.mO.getTargetPosition()) {
-            robot.mO.setPower(0);
-        }
-    }
-
-    // Preset ca sa mergi la pozitia maxima din stanag
-
-    public void goLeft(){
-        if (gamepad1.dpad_left) {
-            robot.mO.setTargetPosition(limMinOriz + 100);
-            robot.mO.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            robot.mO.setPower(0.5);
-        }
-        if (robot.mO.getCurrentPosition() <= robot.mO.getTargetPosition()) {
-            robot.mO.setPower(0);
-        }
-    }
-
     // verificam daca valorile introduse pentru a merge motorul se afla intr-un interval [-1;+1]
     public boolean verifyMotorValues(double value){
         return value >= -1 && value <= 1;
@@ -423,7 +231,152 @@ public class mainTeleOP extends OpMode{
         this.moveMotorsByValues(motorFRvolt, motorFLvolt, motorBRvolt, motorBLvolt);
     }
 
-    //***************Autonomous-presets***************
+    @Override
+    public void init(){
+        /*Initializam toate accesorile robotului, cum ar fi:
+         *   -Motoarele:
+         *       -fr - "motorFR" (Config - 0)
+         *       -fl - "motorFl" (Config - 1)
+         *       -br - "motorBR" (Config - 2)
+         *       -bl - "motorBL" (Config - 3)
+         */
+        robot.init(hardwareMap);
+
+        robot.fr.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.odoDreapta.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        robot.fr.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        robot.fl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        robot.odoDreapta.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
+    public void goUntilObstacle(double speed) {
+        if (gamepad1.cross) {
+            speed = -speed;
+            while (TSLv < 0.1 && TSRv < 0.1) {
+                moveMotorsByValues(speed, speed, speed, speed);
+            }
+            moveMotorsByValues(0, 0, 0, 0);
+            if (TSLv > 0 && TSRv < 0.1) {
+                while (TSRv < 0.1) {
+                    moveMotorsByValues(speed, 0, speed, 0);
+                }
+            } else if (TSRv > 0 && TSLv < 0.1) {
+                while (TSLv < 0.1) {
+                    moveMotorsByValues(0, speed, 0, speed);
+                }
+
+            } else {
+                moveMotorsByValues(0, 0, 0, 0);
+            }
+            moveMotorsByValues(0, 0, 0, 0);
+        }
+    }
+
+    public void initArms(){
+        // ia pozitia actuala a bratului vertical pentru a seta un target position initial
+        posmV = robot.mV1.getCurrentPosition();
+
+        // initializam motoarele pentru a merge cu ajutorul encoder-elor
+
+        robot.mV1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.mV1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.mV2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.mV2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        robot.mO.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.mO.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }
+
+    public void armMoveUp() {
+
+        up = -gamepad2.left_stick_y;
+
+        // Verificam daca output-ul cerut se afla in limite ori daca exista un voltaj pe joystick
+        if ((up > 0 && posmV + 100 * up >= limMax) || (up < 0 && posmV + 100 * up <= limMin)) {
+            posmV -= 10 * up; // Update the target position first
+
+            robot.mV1.setTargetPosition(posmV);
+            robot.mV2.setTargetPosition(posmV);
+
+            robot.mV1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.mV2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // Adjust motor power based on the position
+            robot.mV1.setPower(0.5);
+            robot.mV2.setPower(0.5);
+        } else {
+            // Ensure target position is set even if no movement is needed
+            robot.mV1.setTargetPosition(posmV);
+            robot.mV2.setTargetPosition(posmV);
+
+            robot.mV1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.mV2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            robot.mV1.setPower(0.1);
+            robot.mV2.setPower(0.1);
+        }
+
+    }
+
+    public void armMoveLateral() {
+        forward = -gamepad2.right_stick_x;
+
+        // Verificam daca output-ul cerut se afla in limite ori daca exista un voltaj pe joystick
+        if ((forward > 0 && posmO + 100 * forward <= limMaxOriz) || (forward < 0 && posmO + 100 * forward >= limMinOriz)) {
+            posmO -= 10 * forward; // Update the target position first
+
+            robot.mO.setTargetPosition(posmO);
+            robot.mO.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            robot.mO.setPower(0.5);
+        } else {
+
+            robot.mO.setTargetPosition(posmO);
+            robot.mO.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            robot.mO.setPower(0.1);
+        }
+    }
+
+    // Preset ca sa mergi la pozitia maxima de sus
+    public void goUp(){
+        if(gamepad2.dpad_up) {
+            robot.mV1.setTargetPosition(limMax + 3000);
+            robot.mV2.setTargetPosition(limMax + 3000);
+
+            robot.mV1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.mV2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            robot.mV1.setPower(0.5);
+            robot.mV2.setPower(0.5);
+        }
+        if (robot.mV1.getCurrentPosition() >= robot.mV1.getTargetPosition() &&
+                robot.mV2.getCurrentPosition() >= robot.mV2.getTargetPosition()) {
+            robot.mV1.setPower(0);
+            robot.mV2.setPower(0);
+        }
+    }
+
+    // Preset ca sa mergi la pozitia maxima de jos
+    public void goDown(){
+        if(gamepad1.dpad_down) {
+            robot.mV1.setTargetPosition(limMin - 100);
+            robot.mV2.setTargetPosition(limMin - 100);
+
+            robot.mV1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.mV2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            robot.mV1.setPower(0.5);
+            robot.mV2.setPower(0.5);
+        }
+        if (robot.mV1.getCurrentPosition() <= robot.mV1.getTargetPosition() &&
+                robot.mV2.getCurrentPosition() <= robot.mV2.getTargetPosition()) {
+            robot.mV1.setPower(0);
+            robot.mV2.setPower(0);
+        }
+    }
 
     public void fromBaseToSpecimen(){
         if(gamepad1.options) {
@@ -447,46 +400,13 @@ public class mainTeleOP extends OpMode{
         }
     }
 
-    //***************Main-methods***************
-
-    @Override
-    public void init(){
-        /*Initializam toate accesorile robotului, cum ar fi:
-         *   -Motoarele:
-         *       -fr - "motorFR" (Config - 0)
-         *       -fl - "motorFl" (Config - 1)
-         *       -br - "motorBR" (Config - 2)
-         *       -bl - "motorBL" (Config - 3)
-         */
-        robot.init(hardwareMap);
-
-        robot.fr.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.odoDreapta.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        robot.fr.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        robot.fl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        robot.odoDreapta.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        this.initArms(); // Initializarea bratelelor
-        this.initServo(); // initializarea servo-urilor
-    }
-
     @Override
     public void loop(){
-
         this.moveDriveTrain(); // Controlăm mișcarea robotului pe baza joystickurilor
-        this.armMoveUp(); // Miscam bratul vertical
-        this.armMoveLateral(); // Miscam bratul orizontal
-        this.miscareServo(); // Miscam servo-urile
         this.returnToZone(); // Preset-ul pentru a ajunge inapoi la pozitia initiala
         this.resetPosition(); // Resetam pozitia initiala
         this.updateOdometry(); // Actualizăm odometria robotului
         this.fromBaseToSpecimen(); // Mergem sa punem un specimen
-        this.goUp(); // Verifcam daca resetam bratul de sus la pozitia maxima de sus
-        this.goDown(); // Verifcam daca resetam bratul de sus la pozitia maxima de jos
-        this.goRight(); // Verifcam daca resetam bratul orizontal la pozitia maxima din dreapta
-        this.goLeft(); // Verifcam daca resetam bratul orizontal la pozitia maxima din stanga
 
         TSLv = robot.TSL.getValue();
         TSRv = robot.TSR.getValue();
@@ -503,15 +423,16 @@ public class mainTeleOP extends OpMode{
         telemetry.addData("MotorBL", motorBLvolt);
         telemetry.addData("UpValues", up);
         telemetry.addData("ForwardValues", forward);
-        telemetry.addData("mV", posmV);
+        telemetry.addData("mV1", posmV);
         telemetry.addData("mO", posmO);
-        telemetry.addData("specimentServo", openSpecimen);
-        telemetry.addData("clawServo", openClaw);
         telemetry.addData("X (cm)", position[0]);
         telemetry.addData("Y (cm)", position[1]);
         telemetry.addData("Heading (degrees)", position[2]);
+        telemetry.addData("touch left boolean", TSLt);
+        telemetry.addData("touch left value", TSLv);
+        telemetry.addData("touch right boolean", TSRt);
+        telemetry.addData("touch right value", TSRv);
         telemetry.addLine("version 1.31.2025.1.01");
-
         telemetry.update();
     }
 }

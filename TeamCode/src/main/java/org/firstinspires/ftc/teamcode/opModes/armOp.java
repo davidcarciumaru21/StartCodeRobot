@@ -79,14 +79,78 @@ public class armOp extends OpMode {
             robot.mO.setTargetPosition(posmO);
             robot.mO.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            // Adjust motor power based on the position
             robot.mO.setPower(0.5);
         } else {
-            // Ensure target position is set even if no movement is needed
+
             robot.mO.setTargetPosition(posmO);
             robot.mO.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             robot.mO.setPower(0.1);
+        }
+    }
+
+    // Preset ca sa mergi la pozitia maxima de sus
+    public void goUp(){
+        if(gamepad2.dpad_up) {
+            robot.mV1.setTargetPosition(limMax + 3000);
+            robot.mV2.setTargetPosition(limMax + 3000);
+
+            robot.mV1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.mV2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            robot.mV1.setPower(0.5);
+            robot.mV2.setPower(0.5);
+        }
+        if (robot.mV1.getCurrentPosition() >= robot.mV1.getTargetPosition() &&
+                robot.mV2.getCurrentPosition() >= robot.mV2.getTargetPosition()) {
+            robot.mV1.setPower(0);
+            robot.mV2.setPower(0);
+        }
+    }
+
+    // Preset ca sa mergi la pozitia maxima de jos
+    public void goDown(){
+        if(gamepad1.dpad_down) {
+            robot.mV1.setTargetPosition(limMin - 100);
+            robot.mV2.setTargetPosition(limMin - 100);
+
+            robot.mV1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            robot.mV2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            robot.mV1.setPower(0.5);
+            robot.mV2.setPower(0.5);
+        }
+        if (robot.mV1.getCurrentPosition() <= robot.mV1.getTargetPosition() &&
+                robot.mV2.getCurrentPosition() <= robot.mV2.getTargetPosition()) {
+            robot.mV1.setPower(0);
+            robot.mV2.setPower(0);
+        }
+    }
+
+    // Preset ca sa mergi la pozitia maxima din dreapta
+    public void goRight(){
+        if(gamepad1.dpad_right) {
+            robot.mO.setTargetPosition(limMaxOriz - 100);
+            robot.mO.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            robot.mO.setPower(0.5);
+        }
+        if (robot.mO.getCurrentPosition() >= robot.mO.getTargetPosition()) {
+            robot.mO.setPower(0);
+        }
+    }
+
+    // Preset ca sa mergi la pozitia maxima din stanag
+
+    public void goLeft(){
+        if (gamepad1.dpad_left) {
+            robot.mO.setTargetPosition(limMinOriz + 100);
+            robot.mO.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            robot.mO.setPower(0.5);
+        }
+        if (robot.mO.getCurrentPosition() <= robot.mO.getTargetPosition()) {
+            robot.mO.setPower(0);
         }
     }
 
@@ -105,6 +169,10 @@ public class armOp extends OpMode {
 
         this.armMoveUp();
         this.armMoveLateral();
+        this.goUp(); // Verifcam daca resetam bratul de sus la pozitia maxima de sus
+        this.goDown(); // Verifcam daca resetam bratul de sus la pozitia maxima de jos
+        this.goRight(); // Verifcam daca resetam bratul orizontal la pozitia maxima din dreapta
+        this.goLeft(); // Verifcam daca resetam bratul orizontal la pozitia maxima din stanga
 
         //***************Telemetry***************
 
@@ -112,7 +180,7 @@ public class armOp extends OpMode {
         telemetry.addData("ForwardValues", forward);
         telemetry.addData("mV1", posmV);
         telemetry.addData("mO", posmO);
-        telemetry.addLine("version 1.23.2025.4.29");
+        telemetry.addLine("version 1.31.2025.1.01");
 
         telemetry.update();
     }
