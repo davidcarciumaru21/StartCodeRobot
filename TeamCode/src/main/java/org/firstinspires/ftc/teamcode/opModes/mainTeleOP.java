@@ -3,7 +3,6 @@ package org.firstinspires.ftc.teamcode.opModes;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.teamcode.hardware; // Importam hardware-ul
 
@@ -56,20 +55,22 @@ public class mainTeleOP extends OpMode{
     //***************Methods***************
 
     // Mergem in fata pana ne lovim de ceva
-    public void goUntilObstacle(double speed) {
-        if (gamepad1.cross) {
-            speed = -speed;
-            while (TSLv < 0.1 && TSRv < 0.1) {
-                moveMotorsByValues(speed, speed, speed, speed);
-            }
-            moveMotorsByValues(0, 0, 0, 0);
-            if (TSLv > 0 && TSRv < 0.1) {
-                while (TSRv < 0.1) {
-                    moveMotorsByValues(speed, 0, speed, 0);
+    public void goUntilObstacle(double speedF, double speedS){
+        speedF = -speedF;
+        speedS = -speedS;
+
+        while(robot.TSL.getValue() < 0.1 && robot.TSR.getValue() < 0.1) {
+            moveMotorsByValues(speedF, speedF, speedF, speedF);
+        }
+        moveMotorsByValues(0,0,0,0);
+        while(robot.TSL.getValue() < 1 || robot.TSR.getValue() < 1) {
+            if (robot.TSL.getValue() > 0 && robot.TSR.getValue() < 0.1) {
+                while (robot.TSR.getValue() < 0.1) {
+                    moveMotorsByValues(speedS, 0, speedS, 0);
                 }
-            } else if (TSRv > 0 && TSLv < 0.1) {
-                while (TSLv < 0.1) {
-                    moveMotorsByValues(0, speed, 0, speed);
+            } else if (robot.TSR.getValue() > 0 && robot.TSL.getValue() < 0.1) {
+                while (robot.TSL.getValue() < 0.1) {
+                    moveMotorsByValues(0, speedS, 0, speedS);
                 }
 
             } else {
